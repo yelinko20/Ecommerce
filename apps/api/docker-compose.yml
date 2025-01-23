@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: 'postgresql://YeLinKo:yelinko02@database:5432/ERP'
+    depends_on:
+      - database
+    command: >
+      sh -c "pnpm prisma migrate deploy &&
+             pnpm start:dev"
+
+  database:
+    image: postgres:15-alpine
+    container_name: postgres
+    restart: always
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: YeLinKo
+      POSTGRES_PASSWORD: yelinko02
+      POSTGRES_DB: ERP
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
