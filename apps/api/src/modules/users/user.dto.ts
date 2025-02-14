@@ -112,6 +112,7 @@ export class UserCreateDto {
     description: 'The hashed password of the user',
     example: 'hashed_password123',
   })
+  @IsOptional()
   @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
   password: string;

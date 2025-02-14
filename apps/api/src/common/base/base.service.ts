@@ -21,9 +21,9 @@ import {
   BadRequestException,
   InternalServerException,
   NotFoundException,
-} from '@/exceptions/custom-exceptions';
+} from '@/common/exceptions/custom-exceptions';
 import * as schema from '@/drizzle/schema/index';
-import { camelToSnakeCase } from '@/utils/camel-to-snake';
+import { camelToSnakeCase } from '@/shared/utils/camel-to-snake';
 
 export class BaseService<
   EntityType extends Table<TableConfig<Column<any, object, object>>>,

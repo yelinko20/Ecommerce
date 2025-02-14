@@ -1,7 +1,8 @@
-import { Inject, Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Pool } from 'pg';
+import { Inject, Module, Logger, OnModuleDestroy } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
+
 import * as schema from '@/drizzle/schema/index';
 import { DATABASE_CONNECTION } from './database-connection';
 
@@ -9,23 +10,28 @@ import { DATABASE_CONNECTION } from './database-connection';
   providers: [
     {
       provide: DATABASE_CONNECTION,
-      useFactory: (configService: ConfigService) => {
+      useFactory: async (configService: ConfigService) => {
+        const logger = new Logger('DrizzleModule');
+
         try {
+          logger.log('🚀 Initializing database connection...');
+
           const pool = new Pool({
             connectionString: configService.getOrThrow('DATABASE_URL'),
             max: 10,
             idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 5000,
           });
 
           const db = drizzle(pool, {
             schema: { schema },
-            logger: true,
+            logger: process.env.NODE_ENV !== 'production',
           });
 
-          console.log('Database connection initialized successfully.');
+          logger.log('✅ Database connection initialized successfully.');
           return db;
         } catch (error) {
-          console.error('Failed to initialize database connection:', error);
+          logger.error('❌ Failed to initialize database connection', error);
           throw new Error('Database connection setup failed.');
         }
       },
@@ -34,15 +40,22 @@ import { DATABASE_CONNECTION } from './database-connection';
   ],
   exports: [DATABASE_CONNECTION],
 })
-export class DrizzleModule {
+export class DrizzleModule implements OnModuleDestroy {
+  private readonly logger = new Logger(DrizzleModule.name);
+
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: ReturnType<typeof drizzle>,
   ) {}
 
   async onModuleDestroy() {
-    const pool = this.db.$client as Pool;
-    console.log('Closing database connection pool...');
-    await pool.end();
+    this.logger.warn('🛑 Closing database connection pool...');
+    try {
+      const pool = this.db.$client as Pool;
+      await pool.end();
+      this.logger.log('✅ Database connection pool closed.');
+    } catch (error) {
+      this.logger.error('❌ Error closing database connection pool', error);
+    }
   }
 }

@@ -1,3 +1,5 @@
+import { AdvancedFilters } from '@/base/crud.strategy';
+
 export function camelToSnakeCase(obj?: AdvancedFilters): AdvancedFilters {
   const operatorKeys = [
     'eq',

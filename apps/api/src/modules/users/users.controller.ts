@@ -1,12 +1,16 @@
-import { ControllerFactory } from '@/base/base.controller';
 import { Body, Controller, Post } from '@nestjs/common';
 import * as schema from '@/drizzle/schema/index';
 import { UsersService } from './users.service';
 import { UserCreateDto, UserUpdateDto } from './user.dto';
-import { ApiResponse } from '@/base/response-wrapper';
-import { SecurityService } from '@/security/security.service';
-import { BadRequestException } from '@/exceptions/custom-exceptions';
+import { ControllerFactory } from '@/common/base/base.controller';
+import { SecurityService } from '@/common/security/security.service';
+import { ApiResponse } from '@/common/base/response-wrapper';
+import { BadRequestException } from '@/common/exceptions/custom-exceptions';
+import { MailService } from '@/common/mail/mail.service';
+import { ApiTags } from '@nestjs/swagger';
+import { MailerService } from '@/common/mailer/mailer.service';
 
+@ApiTags('User')
 @Controller('users')
 export class UsersController extends ControllerFactory<
   typeof schema.User,
@@ -16,6 +20,7 @@ export class UsersController extends ControllerFactory<
   constructor(
     protected readonly userService: UsersService,
     protected readonly securityService: SecurityService,
+    protected readonly mailerService: MailerService,
   ) {
     super(userService);
   }
@@ -24,62 +29,48 @@ export class UsersController extends ControllerFactory<
   async create(
     @Body() userCreateDto: UserCreateDto,
   ): Promise<ApiResponse<typeof schema.User>> {
-    try {
-      const { firstName, lastName, userName, password, email } = userCreateDto;
+    const { firstName, lastName, userName, password, email } = userCreateDto;
 
-      const isEmailExisted = await this.userService.alreadyExisted({ email });
+    const isEmailExisted = await this.userService.alreadyExisted({ email });
 
-      if (isEmailExisted) {
-        throw new BadRequestException(`${email} with user is already existed`);
-      }
-
-      let username: string;
-
-      if (userName) {
-        username = await this.handleUserSuggestedName(userName.toLowerCase());
-      } else {
-        const baseUsername = this.generateUserName(firstName, lastName);
-        username = await this.handleUserSuggestedName(baseUsername);
-      }
-
-      const hashedPassword = await this.securityService.hashPassword(password);
-
-      const userData = {
-        ...userCreateDto,
-        userName: username,
-        hashedPassword,
-      };
-      const createdUser = await this.userService.create(userData);
-
-      return new ApiResponse(true, 'User Create Suucess fully', createdUser);
-    } catch (error) {
-      throw new Error(`User creation failed: ${error.message}`);
-    }
-  }
-
-  private generateUserName(firstName: string, lastName: string): string {
-    const baseUsername = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`;
-    return baseUsername.replace(/[^a-z0-9.]/g, ''); // Remove invalid characters
-  }
-
-  private modifyUserNameWithSuffix(
-    baseUsername: string,
-    counter: number,
-  ): string {
-    return `${baseUsername}_${counter}`;
-  }
-
-  private async handleUserSuggestedName(
-    suggestedName: string,
-  ): Promise<string> {
-    let userName = suggestedName;
-    let counter = 1;
-
-    while (await this.userService.alreadyExisted({ userName })) {
-      userName = this.modifyUserNameWithSuffix(suggestedName, counter);
-      counter++;
+    if (isEmailExisted) {
+      throw new BadRequestException(`${email} with user is already existed`);
     }
 
-    return userName;
+    let username: string;
+
+    if (userName) {
+      username = await this.userService.handleUserSuggestedName(
+        userName.toLowerCase(),
+      );
+    } else {
+      const baseUsername = this.userService.generateUserName(
+        firstName,
+        lastName,
+      );
+      username = await this.userService.handleUserSuggestedName(baseUsername);
+    }
+
+    const hashedPassword = await this.securityService.hashPassword(password);
+
+    const userData = {
+      ...userCreateDto,
+      userName: username,
+      hashedPassword,
+    };
+    const createdUser = await this.userService.create(userData);
+    if (createdUser) {
+      await this.mailerService.sendMail({
+        to: userData.email,
+        subject: 'Welcome!',
+        templatePath: 'templates/welcome.mjml',
+        context: {
+          firstName: 'John',
+          confirmUrl: 'https://example.com/confirm',
+        },
+      });
+    }
+
+    return new ApiResponse(true, 'User Create Suucess fully', createdUser);
   }
 }

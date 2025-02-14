@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
   ValidationPipeOptions,
@@ -32,6 +33,7 @@ import { ApiResponse } from './response-wrapper';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '@/drizzle/schema/index';
 import { Column, InferInsertModel, Table, TableConfig } from 'drizzle-orm';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 // https://stackoverflow.com/questions/71394797/nestjs-reusable-controller-with-validation/71396211#71396211
 @Injectable()
@@ -66,8 +68,8 @@ export function ControllerFactory<
     { body: updateDto },
   );
 
-  @ApiTags('Base')
   @Injectable()
+  @UseInterceptors(CacheInterceptor)
   class BaseController implements ICrudController<T, C, U> {
     constructor(private readonly service: BaseService<T, C, U>) {}
 

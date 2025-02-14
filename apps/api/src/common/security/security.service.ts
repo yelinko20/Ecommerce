@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
+import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
 
@@ -36,15 +36,14 @@ export class SecurityService {
   }
 
   async hashPassword(plainPassword: string): Promise<string> {
-    const saltRounds = 10;
-    return await bcrypt.hash(plainPassword, saltRounds);
+    return await argon2.hash(plainPassword);
   }
 
   async verifyPassword(
     plainPassword: string,
     hashedPassword: string,
   ): Promise<boolean> {
-    return await bcrypt.compare(plainPassword, hashedPassword);
+    return await argon2.verify(hashedPassword, plainPassword);
   }
 
   generateCsrfToken(): string {

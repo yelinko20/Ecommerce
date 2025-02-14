@@ -6,9 +6,13 @@ import 'dotenv/config';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  max: 10,
+  idleTimeoutMillis: 30000,
 });
 
 const db = drizzle(pool, { schema }) as NodePgDatabase<typeof schema>;
+
+const BATCH_SIZE = 10;
 
 async function createFakerUser() {
   const firstName = faker.person.firstName();
@@ -22,15 +26,11 @@ async function createFakerUser() {
     isActive: faker.datatype.boolean(),
     isSuperUser: faker.datatype.boolean(),
     phone: faker.phone.number({ style: 'national' }),
-    gender: ['male', 'female', 'other'][
-      faker.number.int({ min: 0, max: 2 })
-    ] as 'male' | 'female' | 'other',
+    gender: faker.helpers.arrayElement(['male', 'female', 'other']),
     birthDate: faker.date.birthdate(),
     address: faker.location.streetAddress(),
     hashedPassword: faker.internet.password({ memorable: true }),
-    role: ['USER', 'ADMIN'][faker.number.int({ min: 0, max: 1 })] as
-      | 'USER'
-      | 'ADMIN',
+    role: faker.helpers.arrayElement(['USER', 'ADMIN']),
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: faker.datatype.boolean() ? new Date() : null,
@@ -41,45 +41,73 @@ async function createFakerUser() {
   };
 }
 
-async function main() {
-  const userIds = await Promise.all(
-    Array(50)
-      .fill(null)
-      .map(async () => {
-        const fakerUser = await createFakerUser();
-        return db.transaction(async (trx) => {
-          const user = await trx
-            .insert(schema.User)
-            .values(fakerUser)
-            .returning();
-          return user[0].id;
-        });
-      }),
+async function seedUsers(batchSize: number) {
+  console.log('🚀 Seeding users...');
+  const users = await Promise.all(
+    Array.from({ length: batchSize }, createFakerUser),
   );
 
-  await Promise.all(
-    Array(50)
-      .fill(null)
-      .map(async () => {
-        const fakerToken = {
-          token: faker.internet.jwt(),
-          expiredAt: faker.date.future(),
-          userId: faker.helpers.arrayElement(userIds),
-        };
-        return db.transaction(async (trx) => {
-          const token = await trx
-            .insert(schema.Token)
-            .values(fakerToken)
-            .returning();
-          return token[0].id;
-        });
-      }),
-  );
+  try {
+    const insertedUsers = await db.transaction(async (trx) => {
+      return trx
+        .insert(schema.User)
+        .values(users)
+        .returning({ id: schema.User.id });
+    });
+
+    console.log(`✅ Inserted ${insertedUsers.length} users`);
+    return insertedUsers.map((u) => u.id);
+  } catch (error) {
+    console.error('❌ Error inserting users:', error);
+    return [];
+  }
 }
 
-main()
-  .then(() => console.log('Seeding completed successfully'))
-  .catch((err) => {
-    console.error(err);
+async function seedTokens(userIds: string[], batchSize: number) {
+  console.log('🔑 Seeding tokens...');
+  const tokens = Array.from({ length: batchSize }).map(() => ({
+    token: faker.internet.jwt(),
+    expiredAt: faker.date.future(),
+    userId: faker.helpers.arrayElement(userIds),
+  }));
+
+  try {
+    const insertedTokens = await db.transaction(async (trx) => {
+      return trx.insert(schema.Token).values(tokens).returning();
+    });
+
+    console.log(`✅ Inserted ${insertedTokens.length} tokens`);
+  } catch (error) {
+    console.error('❌ Error inserting tokens:', error);
+  }
+}
+
+async function main() {
+  console.log('🌱 Starting database seeding...');
+
+  try {
+    // Insert users in batches
+    let userIds: string[] = [];
+    for (let i = 0; i < 50 / BATCH_SIZE; i++) {
+      const batchUserIds = await seedUsers(BATCH_SIZE);
+      userIds.push(...batchUserIds);
+    }
+
+    // Insert tokens in batches
+    if (userIds.length > 0) {
+      for (let i = 0; i < 50 / BATCH_SIZE; i++) {
+        await seedTokens(userIds, BATCH_SIZE);
+      }
+    }
+
+    console.log('🎉 Seeding completed successfully!');
+  } catch (error) {
+    console.error('❌ Seeding failed:', error);
     process.exit(1);
-  });
+  } finally {
+    await pool.end();
+    console.log('🛑 Database connection closed.');
+  }
+}
+
+main();
