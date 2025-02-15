@@ -4,6 +4,10 @@ import { QueueController } from './queue.controller';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@/shared/config/config.types';
+import { MAIL_QUEUE } from '@/shared/constants/queue-names';
+import { MailerModule } from '../mailer/mailer.module';
+import { MailQueue } from './mail/mail.queue';
+import { MailProcessor } from './mail/mail.processor';
 
 @Module({
   imports: [
@@ -27,10 +31,12 @@ import { AllConfigType } from '@/shared/config/config.types';
       inject: [ConfigService],
     }),
     BullModule.registerQueue({
-      name: 'mail',
+      name: MAIL_QUEUE,
     }),
+    MailerModule,
   ],
-  providers: [QueueService],
+  providers: [QueueService, MailProcessor, MailQueue],
   controllers: [QueueController],
+  exports: [QueueModule, MailQueue],
 })
 export class QueueModule {}

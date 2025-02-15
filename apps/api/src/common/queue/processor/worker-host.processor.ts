@@ -1,19 +1,7 @@
-import {
-  InjectQueue,
-  OnWorkerEvent,
-  Processor,
-  WorkerHost,
-} from '@nestjs/bullmq';
+import { OnWorkerEvent, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 
-export const TEST_QUEUE_NAME = 'test';
-export const InjectTestQueue = (): ParameterDecorator =>
-  InjectQueue(TEST_QUEUE_NAME);
-
-@Processor(TEST_QUEUE_NAME, {
-  concurrency: 3,
-})
 export abstract class WorkerHostProcessor extends WorkerHost {
   protected readonly logger = new Logger(WorkerHostProcessor.name);
 

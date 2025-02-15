@@ -6,9 +6,8 @@ import { ControllerFactory } from '@/common/base/base.controller';
 import { SecurityService } from '@/common/security/security.service';
 import { ApiResponse } from '@/common/base/response-wrapper';
 import { BadRequestException } from '@/common/exceptions/custom-exceptions';
-import { MailService } from '@/common/mail/mail.service';
 import { ApiTags } from '@nestjs/swagger';
-import { MailerService } from '@/common/mailer/mailer.service';
+import { MailQueue } from '@/common/queue/mail/mail.queue';
 
 @ApiTags('User')
 @Controller('users')
@@ -20,7 +19,7 @@ export class UsersController extends ControllerFactory<
   constructor(
     protected readonly userService: UsersService,
     protected readonly securityService: SecurityService,
-    protected readonly mailerService: MailerService,
+    protected readonly mailQueue: MailQueue,
   ) {
     super(userService);
   }
@@ -60,7 +59,7 @@ export class UsersController extends ControllerFactory<
     };
     const createdUser = await this.userService.create(userData);
     if (createdUser) {
-      await this.mailerService.sendMail({
+      await this.mailQueue.addMailJob({
         to: userData.email,
         subject: 'Welcome!',
         templatePath: 'templates/welcome.mjml',
@@ -71,6 +70,6 @@ export class UsersController extends ControllerFactory<
       });
     }
 
-    return new ApiResponse(true, 'User Create Suucess fully', createdUser);
+    return new ApiResponse(true, 'User Create Success fully', createdUser);
   }
 }

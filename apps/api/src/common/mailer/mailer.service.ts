@@ -5,6 +5,7 @@ import Handlebars from 'handlebars';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@/shared/config/config.types';
+import { MailData } from '@/shared/interfaces/mail-data.interface';
 
 @Injectable()
 export class MailerService {
@@ -37,10 +38,7 @@ export class MailerService {
     templatePath,
     context,
     ...mailOptions
-  }: nodemailer.SendMailOptions & {
-    templatePath?: string;
-    context?: Record<string, unknown>;
-  }): Promise<void> {
+  }: MailData): Promise<void> {
     let html: string | undefined;
 
     try {

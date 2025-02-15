@@ -15,18 +15,21 @@ import { Queue } from 'bullmq';
 import express from 'express';
 import { QueueBoardMiddleware } from './queue-board.middleware';
 import { AllConfigType } from '@/shared/config/config.types';
+import { InjectMailQueue } from './decorators/inject-queue.decorator';
+import { QueueModule } from '../queue/queue.module';
+import { MAIL_QUEUE } from '@/shared/constants/queue-names';
 
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, QueueModule],
 })
 export class QueueBoardModule implements NestModule, OnModuleInit {
   private serverAdapter = new ExpressAdapter();
   private readonly logger = new Logger(QueueBoardModule.name);
   static configService: ConfigService<AllConfigType>;
 
-  constructor(@InjectQueue('test-queue') private readonly testQueue: Queue) {}
+  constructor(@InjectMailQueue() private readonly mailQueue: Queue) {}
 
-  queues = [new BullMQAdapter(this.testQueue)];
+  queues = [new BullMQAdapter(this.mailQueue)];
 
   static register(): DynamicModule {
     return {
@@ -50,7 +53,7 @@ export class QueueBoardModule implements NestModule, OnModuleInit {
           imports: [ConfigModule],
           inject: [ConfigService],
         }),
-        BullModule.registerQueue({ name: 'test-queue' }),
+        BullModule.registerQueue({ name: MAIL_QUEUE }),
       ],
     };
   }

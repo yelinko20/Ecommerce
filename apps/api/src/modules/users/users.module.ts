@@ -6,6 +6,7 @@ import { SecurityModule } from '@/common/security/security.module';
 import { MailModule } from '@/common/mail/mail.module';
 import { MailerModule } from '@/common/mailer/mailer.module';
 import { CacheModule } from '@nestjs/cache-manager';
+import { QueueModule } from '@/common/queue/queue.module';
 
 @Module({
   providers: [UsersService],
@@ -16,6 +17,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     MailModule,
     MailerModule,
     CacheModule.register(),
+    QueueModule,
   ],
 })
 export class UsersModule {}
