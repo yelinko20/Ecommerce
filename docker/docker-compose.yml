@@ -1,0 +1,71 @@
+version: "3.8"
+services:
+  api:
+    build:
+      context: ./docker/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      NODE_ENV: development
+      APP_PORT: 8080
+      APP_NAME: "NestJS API"
+      API_PREFIX: api
+      FRONTEND_DOMAIN: http://localhost:3000
+      BACKEND_DOMAIN: http://localhost:8080
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://yelinko:yelinko02@postgres:5432/ERP?schema=public
+      SECRET_KEY: 85c4437b8be4b155b39203654e3a79134fb7f25364d30c55e391ccda0ac214fe
+      SMTP_HOST: smtp.gmail.com
+      SMTP_USER: yelinko.2002@gmail.com
+      SMTP_DEFAULT_SENDER_EMAIL: yelinko.2002@gmail.com
+      SMTP_DEFAULT_SENDER_NAME: Yeerp
+      SMTP_SECURE: true
+      SMTP_PASSWORD: hsrkauzixslmqdak
+      SMTP_TLS: true
+      SMTP_SSL: false
+      SMTP_PORT: 587
+      SMTP_REQUIRE_TLS: true
+      BULL_BOARD_USERNAME: yelinko
+      BULL_BOARD_PASSWORD_HASH: $argon2id$v=19$m=65536,t=3,p=4$y3eeIo7MATDhvcPhErRFLQ$PDelPeRWP8illJjfY9hj9vLk5iWe1/TodJlpVaMTnCk
+    volumes:
+      - ./apps/api:/home/yeerp
+    command: /bin/sh -c "bash /home/yeerp/docker/setup.sh && bash /home/yeerp/docker/migrate.sh && npm run start:prod"
+
+  web:
+    build:
+      context: ./docker/web
+    ports:
+      - "3001:3000"
+    depends_on:
+      - api
+    volumes:
+      - ./apps/web:/home/yeerp
+    command: npm run dev
+
+  redis:
+    image: redis:alpine
+    container_name: redis_service
+    restart: always
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:alpine
+    container_name: postgres_service
+    restart: always
+    environment:
+      POSTGRES_USER: yeerp
+      POSTGRES_PASSWORD: yelinko02
+      POSTGRES_DB: ERP
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -59,15 +59,27 @@ export class UsersController extends ControllerFactory<
     };
     const createdUser = await this.userService.create(userData);
     if (createdUser) {
-      await this.mailQueue.addMailJob({
-        to: userData.email,
-        subject: 'Welcome!',
-        templatePath: 'templates/welcome.mjml',
-        context: {
-          firstName: 'John',
-          confirmUrl: 'https://example.com/confirm',
-        },
-      });
+      function delay(ms: number) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+      const testUsers = Array.from({ length: 100 }, (_, i) => ({
+        email: `testuser${i + 1}@example.com`,
+        firstName: `User${i + 1}`,
+        confirmUrl: `https://example.com/confirm/${i + 1}`,
+      }));
+
+      for (const user of testUsers) {
+        await this.mailQueue.addMailJob({
+          to: user.email,
+          subject: 'Welcome!',
+          templatePath: 'templates/welcome.mjml',
+          context: {
+            firstName: user.firstName,
+            confirmUrl: user.confirmUrl,
+          },
+        });
+        delay(1000);
+      }
     }
 
     return new ApiResponse(true, 'User Create Success fully', createdUser);

@@ -8,6 +8,12 @@ export class MailQueue {
   constructor(@InjectMailQueue() private readonly mailQueue: Queue) {}
 
   async addMailJob(mailData: MailData, priority: number = 1) {
-    await this.mailQueue.add('sendMail', mailData, { priority });
+    await this.mailQueue.add('sendMail', mailData, {
+      priority,
+      backoff: {
+        type: 'exponential',
+        delay: 2000,
+      },
+    });
   }
 }

@@ -14,6 +14,7 @@ import appConfig from '@/shared/config/app.config';
 import queueConfig from '@/shared/config/queue/queue.config';
 import { QueueBoardModule } from './common/queue-board/queue-board.module';
 import { CacheModule } from '@nestjs/cache-manager';
+import { HealthModule } from './common/health/health.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     QueueModule,
     QueueBoardModule.register(),
     CacheModule.register(),
+    HealthModule,
   ],
   controllers: [],
   providers: [],
