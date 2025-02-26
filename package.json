@@ -2,13 +2,13 @@
   "name": "shadcn-ui-monorepo",
   "version": "0.0.1",
   "private": true,
-  "type": "module",
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "commit": "git-cz"
+    "commit": "lint-staged && git-cz",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.7.1",
@@ -19,6 +19,9 @@
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
     "commitizen": "^4.3.1",
+    "commitlint-config-gitmoji": "^2.3.1",
+    "cz-customizable": "^7.4.0",
+    "husky": "^9.1.7",
     "inquirer": "9",
     "lint-staged": "^15.4.3",
     "prettier": "^3.2.5",
@@ -26,13 +29,16 @@
     "typescript": "5.5.4"
   },
   "lint-staged": {
-    "*.ts": [
+    "**/*.{js,jsx,ts,tsx}": [
       "prettier --write"
+    ],
+    "**/*.{html,json,css,scss,md,mdx}": [
+      "prettier -w"
     ]
   },
   "config": {
     "commitizen": {
-      "path": "@commitlint/cz-commitlint"
+      "path": "cz-customizable"
     }
   },
   "packageManager": "pnpm@9.12.3",
