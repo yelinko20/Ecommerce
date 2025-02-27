@@ -59,6 +59,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       const latency = (performance.now() - start).toFixed(2);
       return { status: 'up', latency: Number(latency) };
     } catch (error) {
+      this.logger.error(`❌ Redis status: ${error.message}`);
       return { status: 'down' };
     }
   }

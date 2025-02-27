@@ -26,7 +26,6 @@ export abstract class WorkerHostProcessor extends WorkerHost {
   async onCompleted(job: Job) {
     const { id, name, queueName, finishedOn, returnvalue, timestamp } = job;
     const completionTime = finishedOn ? new Date(finishedOn).toISOString() : '';
-    const startTime = timestamp ? new Date(timestamp).toISOString() : '';
 
     const executionTime =
       finishedOn && timestamp

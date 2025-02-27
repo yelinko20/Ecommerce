@@ -15,13 +15,7 @@ import {
   ValidationPipeOptions,
 } from '@nestjs/common';
 import { ArgumentMetadata, Type } from '@nestjs/common/interfaces';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-  ApiBody,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { BaseService } from './base.service';
 import {
   AdvancedFilters,

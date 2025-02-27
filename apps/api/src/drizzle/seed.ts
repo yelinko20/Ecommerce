@@ -87,7 +87,7 @@ async function main() {
 
   try {
     // Insert users in batches
-    let userIds: string[] = [];
+    const userIds: string[] = [];
     for (let i = 0; i < 50 / BATCH_SIZE; i++) {
       const batchUserIds = await seedUsers(BATCH_SIZE);
       userIds.push(...batchUserIds);

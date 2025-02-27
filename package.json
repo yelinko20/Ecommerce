@@ -8,7 +8,8 @@
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "commit": "lint-staged && git-cz",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "turbo run test"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.7.1",
@@ -16,6 +17,8 @@
     "@commitlint/cz-commitlint": "^19.6.1",
     "@commitlint/prompt-cli": "^19.7.1",
     "@commitlint/types": "^19.5.0",
+    "@eslint/eslintrc": "^3.3.0",
+    "@eslint/js": "^9.21.0",
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
     "commitizen": "^4.3.1",
@@ -30,7 +33,8 @@
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [
-      "prettier --write"
+      "prettier --write",
+      "eslint --fix"
     ],
     "**/*.{html,json,css,scss,md,mdx}": [
       "prettier -w"

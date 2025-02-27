@@ -12,8 +12,6 @@ import rateLimit from 'express-rate-limit';
 
 import { AppModule } from './app.module';
 import { AllConfigType } from '@/shared/config/config.types';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { ExpressAdapter } from '@bull-board/express';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');

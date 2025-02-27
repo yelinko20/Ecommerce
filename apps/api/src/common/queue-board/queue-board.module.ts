@@ -1,7 +1,7 @@
 import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
-import { BullModule, InjectQueue } from '@nestjs/bullmq';
+import { BullModule } from '@nestjs/bullmq';
 import {
   DynamicModule,
   Logger,

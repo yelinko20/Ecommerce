@@ -1,16 +1,30 @@
-// eslint.config.mjs
-import libraryConfig from "@workspace/eslint-config/library.js";
+import tsParser from "@typescript-eslint/parser";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import js from "@eslint/js";
+import { FlatCompat } from "@eslint/eslintrc";
 
-/** @type {import("eslint").Linter.FlatConfigItem[]} */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+  recommendedConfig: js.configs.recommended,
+  allConfig: js.configs.all,
+});
+
 export default [
-  // Base/shared configuration
-  libraryConfig,
-  // Local configuration overrides
   {
-    ignores: ["apps/**", "packages/**"],
-    parser: "@typescript-eslint/parser",
-    parserOptions: {
-      project: true,
+    ignores: ["apps/**/*", "packages/**/*"],
+  },
+  {
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: 5,
+      sourceType: "script",
+
+      parserOptions: {
+        project: true,
+      },
     },
   },
 ];
