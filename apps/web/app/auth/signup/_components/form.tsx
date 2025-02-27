@@ -22,7 +22,7 @@ export default function SignupForm() {
       name: "",
       email: "",
       password: "",
-      confirmPassword: "",
+      // confirmPassword: "",
     },
   });
   console.log(state);
@@ -72,7 +72,7 @@ export default function SignupForm() {
           </FormItem>
         )}
       />
-      <FormField
+      {/* <FormField
         control={form.control}
         name="confirmPassword"
         render={({ field }) => (
@@ -84,7 +84,7 @@ export default function SignupForm() {
             <FormMessage />
           </FormItem>
         )}
-      />
+      /> */}
     </GeneralForm>
   );
 }

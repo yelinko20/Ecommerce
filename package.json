@@ -7,7 +7,7 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "commit": "lint-staged && git-cz",
+    "commit": "cz",
     "prepare": "husky",
     "test": "turbo run test"
   },
