@@ -1,69 +1,52 @@
 "use server";
-
+import "server-only";
+import { signupSchema } from "./schema";
 import { z } from "zod";
 
-export interface ActionResponse<T = Record<string, unknown>> {
+type FormState = {
   success: boolean;
-  message: string;
-  errors?: {
-    [K in keyof T]?: string[];
-  };
-}
-
-export const signupSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address").min(1, "Email is required"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/\d/, "Password must contain at least one number")
-    .regex(/[@$!%*?&]/, "Password must contain at least one special character"),
-  // confirmPassword: z.string().min(1, "Confirm password is required"),
-});
-// .refine((data) => data.password === data.confirmPassword, {
-//   message: "Passwords must match",
-//   path: ["confirmPassword"],
-// });
+  fields?: Record<string, string>;
+  errors?: Record<string, string[]>;
+};
 
 export type SignupFormData = z.infer<typeof signupSchema>;
 
 export async function signup(
-  prevState: ActionResponse | null,
-  formData: FormData,
-): Promise<ActionResponse<SignupFormData>> {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  prevState: FormState,
+  payload: FormData,
+): Promise<FormState> {
+  console.log("payload received", payload);
 
-  try {
-    const rawData: SignupFormData = {
-      name: formData.get("name")?.toString() || "",
-      email: formData.get("email")?.toString() || "",
-      password: formData.get("password")?.toString() || "",
-      // confirmPassword: formData.get("confirmPassword")?.toString() || "",
-    };
-
-    const validatedData = signupSchema.safeParse(rawData);
-
-    if (!validatedData.success) {
-      return {
-        success: false,
-        message: "Please fix the errors in the form",
-        errors: validatedData.error.flatten().fieldErrors,
-      };
-    }
-
-    console.log("Signup data submitted:", validatedData.data);
-
-    return {
-      success: true,
-      message: "Signup successful!",
-    };
-  } catch (error) {
-    console.error("Unexpected error:", error);
+  if (!(payload instanceof FormData)) {
     return {
       success: false,
-      message: "An unexpected error occurred. Please try again later.",
+      errors: { error: ["Invalid Form Data"] },
     };
   }
+
+  const formData = Object.fromEntries(payload);
+  console.log("form data", formData);
+
+  const parsed = signupSchema.safeParse(formData);
+
+  if (!parsed.success) {
+    const errors = parsed.error.flatten().fieldErrors;
+    const fields: Record<string, string> = {};
+
+    for (const key of Object.keys(formData)) {
+      fields[key] = formData[key]?.toString() || "";
+    }
+    console.log("error returned data", formData);
+    console.log("error returned error", errors);
+    return {
+      success: false,
+      fields,
+      errors,
+    };
+  }
+
+  console.log("parsed data", parsed.data);
+  return {
+    success: true,
+  };
 }
