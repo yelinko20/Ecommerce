@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { MoveLeft, Save, Trash } from "lucide-react";
-import { Dispatch, SetStateAction, ReactNode, ReactElement } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  ReactNode,
+  ReactElement,
+  RefObject,
+  startTransition,
+} from "react";
 
 import { Button, buttonVariants } from "@workspace/ui/components/button";
 import {
@@ -42,6 +49,7 @@ type GeneralFormProps<T extends FieldValues> = {
   showCancel?: boolean;
   formAction: (payload: FormData) => void;
   isPending: boolean;
+  formRef: RefObject<HTMLFormElement>;
 };
 
 export default function GeneralForm<T extends FieldValues>({
@@ -62,6 +70,7 @@ export default function GeneralForm<T extends FieldValues>({
   formAction,
   isPending,
   form,
+  formRef,
 }: GeneralFormProps<T>) {
   const widthClass = {
     sm: "w-full max-w-md",
@@ -87,18 +96,18 @@ export default function GeneralForm<T extends FieldValues>({
     <div
       className={cn(
         "mx-auto flex w-full px-4 py-6 sm:py-10 flex-col justify-center",
-        widthClass
+        widthClass,
       )}
     >
       <Form {...form}>
         <form
+          ref={formRef}
           action={formAction}
-          onSubmit={async (e) => {
-            if (!form.formState.isValid) {
-              e.preventDefault();
-              await form.trigger();
-              return;
-            }
+          onSubmit={(evt) => {
+            evt.preventDefault();
+            form.handleSubmit(() => {
+              startTransition(() => formAction(new FormData(formRef.current!)));
+            })(evt);
           }}
         >
           <Card className={cn(cardClassName)}>
@@ -115,7 +124,7 @@ export default function GeneralForm<T extends FieldValues>({
             <CardFooter
               className={cn(
                 "flex flex-col sm:flex-row gap-4 items-center",
-                footerAlignmentClass
+                footerAlignmentClass,
               )}
             >
               <Button
@@ -129,7 +138,7 @@ export default function GeneralForm<T extends FieldValues>({
                 <Link
                   className={cn(
                     buttonVariants({ variant: "outline" }),
-                    "w-full sm:w-auto text-center"
+                    "w-full sm:w-auto text-center",
                   )}
                   href={cancelPath}
                 >

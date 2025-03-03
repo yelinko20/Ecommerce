@@ -1,8 +1,8 @@
 "use client";
 
 import GeneralForm from "@/components/form/general-form";
-import { signup, SignupFormData, signupSchema } from "../actions/signup";
-import { useActionState } from "react";
+import { signup, SignupFormData } from "../actions/signup";
+import { useActionState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -13,25 +13,43 @@ import {
   FormMessage,
 } from "@workspace/ui/components/form";
 import { Input } from "@workspace/ui/components/input";
+import { signupSchema } from "../actions/schema";
 
 export default function SignupForm() {
-  const [state, action, isPending] = useActionState(signup, null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const initialValues = {
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  };
+
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      // confirmPassword: "",
-    },
+    defaultValues: initialValues,
+    mode: "onTouched",
   });
-  console.log(state);
+
+  const [state, action, isPending] = useActionState(signup, {
+    success: false,
+  });
+
+  useEffect(() => {
+    if (state?.fields) {
+      Object.entries(state.fields).forEach(([key, value]) => {
+        form.setValue(key as keyof SignupFormData, value);
+      });
+    }
+  }, [state.fields, form.setValue, form]);
+
   return (
     <GeneralForm
       formAction={action}
       isPending={isPending}
       formHeader="SignUp"
       form={form}
+      formRef={formRef}
     >
       <FormField
         control={form.control}
@@ -40,7 +58,7 @@ export default function SignupForm() {
           <FormItem>
             <FormLabel>Name</FormLabel>
             <FormControl>
-              <Input placeholder="Jhon Doe" {...field} />
+              <Input placeholder="John Doe" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -56,6 +74,11 @@ export default function SignupForm() {
               <Input placeholder="jhondoe@example.com" {...field} />
             </FormControl>
             <FormMessage />
+            {state?.errors?.email && (
+              <p className="text-sm font-medium text-destructive">
+                {state.errors.email}
+              </p>
+            )}
           </FormItem>
         )}
       />
@@ -66,25 +89,25 @@ export default function SignupForm() {
           <FormItem>
             <FormLabel>Password</FormLabel>
             <FormControl>
-              <Input placeholder="P@ssw0rd!" {...field} />
+              <Input type="password" placeholder="P@ssw0rd!" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
-      {/* <FormField
+      <FormField
         control={form.control}
         name="confirmPassword"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Comfirm Password</FormLabel>
+            <FormLabel>Confirm Password</FormLabel>
             <FormControl>
-              <Input placeholder="P@ssw0rd!" {...field} />
+              <Input type="password" placeholder="P@ssw0rd!" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
-      /> */}
+      />
     </GeneralForm>
   );
 }
